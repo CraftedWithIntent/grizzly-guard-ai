@@ -346,11 +346,76 @@ This is an open-source project. Contributions welcome!
 
 ---
 
+## Codebase Layout
+
+```
+grizzly/
+├── .github/workflows/
+│   ├── ci.yml                  # Test matrix (Python 3.11/3.12), linting, build
+│   └── publish.yml             # PyPI + Docker release
+├── Dockerfile                  # Ultra-lightweight multi-stage image
+├── pyproject.toml              # uv dependencies, CLI entrypoint
+├── README.md                   # This file
+├── WORKFLOW.md                 # Execution discipline (pre-work, branch strategy, QA gates)
+├── src/grizzly/
+│   ├── __init__.py             # Public API (guard_ingress, guard_egress)
+│   ├── cli.py                  # Typer CLI (grizzly proxy, grizzly scan)
+│   ├── domain/
+│   │   └── __init__.py         # Immutable types (GuardResult, ViolationType)
+│   ├── core/
+│   │   └── __init__.py         # Pure functional validators (injection, PII, JSON repair)
+│   └── infrastructure/
+│       └── __init__.py         # FastAPI proxy, ONNX loaders (Phase 2+)
+└── tests/
+    └── test_functional_core.py  # Unit tests (≥80% coverage)
+```
+
+## Deployment
+
+### Local Development
+
+```bash
+git clone https://github.com/CraftedWithIntent/grizzly.git
+cd grizzly
+uv pip install -e .
+grizzly proxy --port 8081
+```
+
+### Docker
+
+```bash
+docker run -p 8081:8081 ghcr.io/craftedwithintent/grizzly:latest
+```
+
+### Kubernetes
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grizzly
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+      - name: grizzly
+        image: ghcr.io/craftedwithintent/grizzly:latest
+        ports:
+        - containerPort: 8081
+```
+
+---
+
+**No Shared Dependencies:** Grizzly is completely decoupled from other CraftedWithIntent products. It works standalone as a guardrails engine or middleware proxy.
+
+---
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
 
-**CraftedWithIntent™** — Heavy-duty deterministic protection for AI agents.
+**CraftedWithIntent™** — Deterministic LLM Safety at the Speed of Inference.
 
 ---
 
