@@ -1,0 +1,81 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "grizzly-guard"
+version = "0.1.0-dev"
+description = "Sub-5ms deterministic guardrails engine for LLM safety, prompt injection defense, and JSON schema enforcement"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "CraftedWithIntent", email = "hello@craftedwithintent.ai" }
+]
+keywords = [
+    "guardrails",
+    "prompt-injection",
+    "llm-safety",
+    "json-repair",
+    "pii-masking",
+    "deterministic"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries",
+]
+
+dependencies = [
+    "fastapi>=0.104.0",
+    "httpx>=0.25.0",
+    "pydantic>=2.0.0",
+    "typer[all]>=0.12.0",
+    "onnxruntime>=1.16.0",
+    "numpy>=1.24.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
+    "ruff>=0.1.0",
+    "pyright>=1.1.0",
+    "black>=23.0.0",
+]
+
+[project.scripts]
+grizzly = "grizzly.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/grizzly"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-v --cov=src/grizzly --cov-report=term-missing --cov-fail-under=80"
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.pyright]
+include = ["src", "tests"]
+strict = true
+typeCheckingMode = "strict"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C", "D"]
+ignore = ["D104", "D105"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311", "py312"]

@@ -1,0 +1,51 @@
+"""Grizzly CLI: guardrail proxy and scanning commands."""
+
+import typer
+
+app = typer.Typer(help="Grizzly: Deterministic LLM Guardrails Engine")
+
+
+@app.command()
+def proxy(
+    port: int = typer.Option(8081, help="Proxy server port"),
+    host: str = typer.Option("0.0.0.0", help="Proxy server host"),
+    similarity: float = typer.Option(0.92, help="Similarity threshold (unused in Phase 1)"),
+) -> None:
+    """Start Grizzly proxy server on specified port.
+
+    Example:
+        grizzly proxy --port 8081 --host 127.0.0.1
+    """
+    typer.echo(f"Starting Grizzly proxy on {host}:{port}")
+    typer.echo(f"Similarity threshold: {similarity}")
+    typer.echo("(Proxy server implementation in M1.2)")
+
+
+@app.command()
+def scan(
+    prompt: str = typer.Option(..., help="Prompt to scan for injection risk"),
+) -> None:
+    """Scan a prompt for injection risk.
+
+    Example:
+        grizzly scan --prompt "ignore previous instructions"
+    """
+    from grizzly.core import classify_injection_heuristic
+
+    result = classify_injection_heuristic(prompt)
+    typer.echo(f"Injection Risk Score: {result.risk_score:.2f}")
+    typer.echo(f"Is Injection: {result.is_injection}")
+    typer.echo(f"Detected Patterns: {result.detected_patterns}")
+    typer.echo(f"Latency: {result.latency_ms:.2f}ms")
+
+
+@app.command()
+def version() -> None:
+    """Show version information."""
+    typer.echo("Grizzly v0.1.0-dev")
+    typer.echo("Deterministic LLM Guardrails Engine")
+    typer.echo("MIT License • CraftedWithIntent")
+
+
+if __name__ == "__main__":
+    app()
