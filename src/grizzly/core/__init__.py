@@ -67,7 +67,9 @@ def detect_canary_tokens(text: str) -> list[str]:
     return matched
 
 
-def classify_injection_heuristic(prompt: str) -> InjectionClassifierResult:
+def classify_injection_heuristic(
+    prompt: str, threshold: float = 0.25
+) -> InjectionClassifierResult:
     """Classify prompt for injection risk using heuristics.
 
     Checks:
@@ -75,6 +77,11 @@ def classify_injection_heuristic(prompt: str) -> InjectionClassifierResult:
     - Known attack signatures (DAN, GPT-4 jailbreaks, etc.)
     - Canary tokens
     - Token length anomalies
+    - Repetition patterns (common in injection attacks)
+
+    Args:
+        prompt: The user prompt to classify
+        threshold: Risk score threshold for classification (default 0.25)
 
     Returns classification result with risk score (0.0–1.0).
     """
@@ -87,7 +94,7 @@ def classify_injection_heuristic(prompt: str) -> InjectionClassifierResult:
     # Check entropy
     entropy = calculate_entropy(prompt)
     heuristic_flags["entropy"] = entropy
-    if entropy > 0.8:
+    if entropy > 0.75:
         risk_score += 0.15
         heuristic_flags["entropy_anomaly"] = True
 
@@ -99,32 +106,47 @@ def classify_injection_heuristic(prompt: str) -> InjectionClassifierResult:
         r"do not follow",
         r"override.*system",
         r"DAN[\s-]*mode",
-        r"GPT-?4",
+        r"system prompt",
+        r"assistant:\s*ignore",
+        r"you are now",
     ]
     for pattern in jailbreak_patterns:
         if re.search(pattern, prompt, re.IGNORECASE):
             detected_patterns.append(pattern)
-            risk_score += 0.1
+            risk_score += 0.12
 
     # Check for canary tokens
     canaries = detect_canary_tokens(prompt)
     if canaries:
         detected_patterns.extend(canaries)
-        risk_score += 0.2
+        risk_score += 0.25
         heuristic_flags["canary_tokens"] = True
 
     # Check token count anomaly (very short or very long)
     tokens = prompt.split()
-    if len(tokens) < 5:
+    if len(tokens) < 3:
         heuristic_flags["token_count_low"] = True
-        risk_score += 0.05
-    elif len(tokens) > 2000:
+        risk_score += 0.08
+    elif len(tokens) > 2500:
         heuristic_flags["token_count_high"] = True
-        risk_score += 0.1
+        risk_score += 0.15
+
+    # Check for suspicious repetition patterns (common in injection attacks)
+    # e.g., "ignore ignore ignore" or "do do do"
+    words = prompt.lower().split()
+    word_counts = {}
+    for word in words:
+        word_counts[word] = word_counts.get(word, 0) + 1
+
+    for word, count in word_counts.items():
+        if len(word) > 3 and count > 2:  # Repeated word > 2 times
+            risk_score += min(0.05 * count, 0.2)
+            heuristic_flags["repetition_detected"] = True
+            break
 
     # Normalize risk score to 0.0–1.0
     risk_score = min(risk_score, 1.0)
-    is_injection = risk_score > 0.3  # Threshold
+    is_injection = risk_score > threshold
 
     latency_ms = (time.perf_counter() - start_time) * 1000
 
@@ -291,7 +313,7 @@ def validate_json_schema(data: Any, schema: SchemaSpec) -> bool:
 
 def guard_ingress(
     prompt: str,
-    injection_threshold: float = 0.3,
+    injection_threshold: float = 0.25,
     mask_pii_flag: bool = True,
 ) -> GuardResult:
     """Pre-LLM ingress validation pipeline.
@@ -300,13 +322,20 @@ def guard_ingress(
     1. Classify for injection risk
     2. Optionally mask PII
     3. Return decision (passed/blocked)
+
+    Args:
+        prompt: User input prompt
+        injection_threshold: Risk score threshold (default 0.25)
+        mask_pii_flag: Whether to mask PII (default True)
+
+    Returns GuardResult with violations list.
     """
     start_time = time.perf_counter()
     violations = []
     masked_payload = prompt
 
     # Step 1: Injection classification
-    injection_result = classify_injection_heuristic(prompt)
+    injection_result = classify_injection_heuristic(prompt, threshold=injection_threshold)
     if injection_result.is_injection:
         violations.append(ViolationType.PROMPT_INJECTION)
 

@@ -41,7 +41,7 @@ def test_classify_injection_heuristic_jailbreak() -> None:
     result = classify_injection_heuristic(prompt)
 
     assert result.is_injection
-    assert result.risk_score > 0.3
+    assert result.risk_score > 0.25
     assert len(result.detected_patterns) > 0
 
 

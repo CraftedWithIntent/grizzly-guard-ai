@@ -9,16 +9,21 @@ app = typer.Typer(help="Grizzly: Deterministic LLM Guardrails Engine")
 def proxy(
     port: int = typer.Option(8081, help="Proxy server port"),
     host: str = typer.Option("0.0.0.0", help="Proxy server host"),
-    similarity: float = typer.Option(0.92, help="Similarity threshold (unused in Phase 1)"),
+    upstream: str = typer.Option(
+        "https://api.openai.com/v1/chat/completions",
+        help="Upstream LLM API endpoint",
+    ),
 ) -> None:
     """Start Grizzly proxy server on specified port.
 
     Example:
         grizzly proxy --port 8081 --host 127.0.0.1
     """
+    from grizzly.infrastructure.proxy_server import run_proxy
+
     typer.echo(f"Starting Grizzly proxy on {host}:{port}")
-    typer.echo(f"Similarity threshold: {similarity}")
-    typer.echo("(Proxy server implementation in M1.2)")
+    typer.echo(f"Upstream: {upstream}")
+    run_proxy(port=port, host=host, upstream_url=upstream)
 
 
 @app.command()
