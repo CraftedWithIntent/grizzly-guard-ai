@@ -12,5 +12,6 @@ def run_proxy(port: int, host: str, upstream_url: str) -> None:
         port: Server port
         host: Server host/bind address
         upstream_url: Upstream LLM API endpoint to proxy to
+
     """
     raise NotImplementedError("Phase 1 stub: Proxy server implementation pending")
