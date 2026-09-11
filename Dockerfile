@@ -1,5 +1,4 @@
-# Multi-stage Dockerfile for Grizzly guardrails engine
-
+# Multi-stage build for Grizzly guardrails proxy
 # Stage 1: Builder
 FROM python:3.11-slim as builder
 
@@ -7,37 +6,43 @@ WORKDIR /build
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install UV and build Grizzly
+# Copy source and build wheel
 COPY . .
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    /root/.cargo/bin/uv pip install --system -e . && \
-    python -m pip install build && \
-    python -m build
+RUN pip install --upgrade pip uv && \
+    uv build --wheel && \
+    mv dist/*.whl /tmp/grizzly.whl
 
 # Stage 2: Runtime
 FROM python:3.11-slim
 
 WORKDIR /app
 
+# Create non-root user
+RUN useradd -m -u 1000 grizzly
+
 # Install runtime dependencies only
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir /tmp/grizzly.whl
 
-# Copy only necessary files from builder
-COPY --from=builder /build/dist /tmp/dist
+# Copy wheel from builder
+COPY --from=builder /tmp/grizzly.whl .
 
-# Install Grizzly from built wheel
-RUN pip install --no-cache-dir /tmp/dist/grizzly_guard*.whl && \
-    rm -rf /tmp/dist
+# Set ownership
+RUN chown -R grizzly:grizzly /app
+
+# Switch to non-root user
+USER grizzly
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8081/health || exit 1
+    CMD python -m grizzly.cli health || exit 1
 
-# Run Grizzly proxy
+# Default command: start proxy on :8081
+ENTRYPOINT ["python", "-m", "grizzly.cli"]
+CMD ["proxy", "--host", "0.0.0.0", "--port", "8081"]
+
+# Expose proxy port
 EXPOSE 8081
-CMD ["grizzly", "proxy", "--host", "0.0.0.0", "--port", "8081"]
