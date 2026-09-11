@@ -4,6 +4,22 @@ All notable changes to Grizzly Guard AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-09-12
+
+### 🔧 Documentation Patch
+
+Fix critical documentation issues in PyPI rendering.
+
+### 📝 Documentation
+- Fixed all old naming references (grizzly → grizzly-guard-ai)
+- CLI commands now correctly show `grizzly-guard-ai proxy` and `grizzly-guard-ai scan`
+- Docker image references corrected to `ghcr.io/craftedwithintent/grizzly-guard-ai:latest`
+- Kubernetes deployment manifests updated with correct names
+- Installation examples now use `cd grizzly-guard-ai` (not `cd grizzly`)
+- Module paths corrected: `src/grizzly_guard_ai` (not `src/grizzly`)
+
+---
+
 ## [0.1.0] - 2026-09-12
 
 ### 🎉 Initial Release: MVP Guardrails Engine
