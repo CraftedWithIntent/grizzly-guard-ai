@@ -12,7 +12,7 @@ from typing import Any
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 
-from grizzly.core import guard_egress, guard_ingress
+from grizzly_guard_ai.core import guard_egress, guard_ingress
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "info").upper())
 logger = logging.getLogger(__name__)
