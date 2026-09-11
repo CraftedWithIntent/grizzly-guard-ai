@@ -292,22 +292,19 @@ def validate_json_schema(data: Any, schema: SchemaSpec) -> bool:
             return False
 
     # Check strict mode (no unknown fields)
-    if schema.strict:
-        properties: Any = schema.json_schema.get("properties", {})
-        allowed_keys: set[str] = set(schema.required_fields)
-        if isinstance(properties, dict):
-            for k in properties:
-                if isinstance(k, (str, int)):
-                    allowed_keys.add(str(k))
+    if not schema.strict:
+        return True
 
-        data_keys: set[str] = set()
-        for k in data.keys():
+    properties: Any = schema.json_schema.get("properties", {})
+    allowed_keys: set[str] = set(schema.required_fields)
+
+    if isinstance(properties, dict):
+        for k in properties:
             if isinstance(k, (str, int)):
-                data_keys.add(str(k))
-        if not data_keys.issubset(allowed_keys):
-            return False
+                allowed_keys.add(str(k))
 
-    return True
+    data_keys: set[str] = {str(k) for k in data.keys() if isinstance(k, (str, int))}
+    return data_keys.issubset(allowed_keys)
 
 
 # ============================================================================
