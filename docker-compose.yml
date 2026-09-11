@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  grizzly-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: grizzly-proxy
+    ports:
+      - "8081:8081"
+    environment:
+      LOG_LEVEL: info
+    healthcheck:
+      test: ["CMD", "python", "-m", "grizzly.cli", "health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+    networks:
+      - grizzly
+
+  openai-mock:
+    image: kennethreitz/httpbin
+    container_name: openai-mock
+    ports:
+      - "8000:80"
+    networks:
+      - grizzly
+
+networks:
+  grizzly:
+    driver: bridge
