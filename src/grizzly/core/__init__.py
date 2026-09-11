@@ -32,11 +32,11 @@ def calculate_entropy(text: str) -> float:
     if not text:
         return 0.0
 
-    freq = {}
+    freq: dict[str, int] = {}
     for char in text:
         freq[char] = freq.get(char, 0) + 1
 
-    entropy = 0.0
+    entropy: float = 0.0
     text_len = len(text)
     for count in freq.values():
         prob = count / text_len
@@ -86,9 +86,9 @@ def classify_injection_heuristic(
     """
     start_time = time.perf_counter()
 
-    detected_patterns = []
-    heuristic_flags = {}
-    risk_score = 0.0
+    detected_patterns: list[str] = []
+    heuristic_flags: dict[str, Any] = {}
+    risk_score: float = 0.0
 
     # Check entropy
     entropy = calculate_entropy(prompt)
@@ -172,7 +172,7 @@ def mask_pii(text: str) -> PiiClassifierResult:
     """
     start_time = time.perf_counter()
 
-    pii_patterns = {
+    pii_patterns: dict[str, str] = {
         "ssn": r"\b\d{3}-\d{2}-\d{4}\b",
         "email": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
         "api_key": r"(sk_|api_|key_)[A-Za-z0-9_]{20,}",
@@ -181,8 +181,8 @@ def mask_pii(text: str) -> PiiClassifierResult:
     }
 
     masked_text = text
-    detected_types = []
-    redaction_count = 0
+    detected_types: list[str] = []
+    redaction_count: int = 0
 
     for pii_type, pattern in pii_patterns.items():
         matches = re.finditer(pattern, masked_text)
@@ -223,7 +223,7 @@ def repair_json(text: str) -> JsonRepairResult:
 
     Returns repaired JSON string (valid JSON if successful).
     """
-    mutations = []
+    mutations: list[str] = []
     repaired = text
 
     # Try parsing first
@@ -328,7 +328,7 @@ def guard_ingress(
 
     """
     start_time = time.perf_counter()
-    violations = []
+    violations: list[ViolationType] = []
     masked_payload = prompt
 
     # Step 1: Injection classification
@@ -376,7 +376,7 @@ def guard_egress(
     5. Return result
     """
     start_time = time.perf_counter()
-    violations = []
+    violations: list[ViolationType] = []
     masked_payload = llm_output
 
     # Step 1–2: JSON repair
