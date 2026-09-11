@@ -18,6 +18,7 @@ from grizzly.domain import (
     SchemaSpec,
     ViolationType,
 )
+
 # ============================================================================
 # INJECTION DETECTION (Heuristic + Entropy)
 # ============================================================================
@@ -222,7 +223,6 @@ def repair_json(text: str) -> JsonRepairResult:
 
     Returns repaired JSON string (valid JSON if successful).
     """
-    start_time = time.perf_counter()
     mutations = []
     repaired = text
 
