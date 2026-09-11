@@ -296,9 +296,14 @@ def validate_json_schema(data: Any, schema: SchemaSpec) -> bool:
         properties: Any = schema.json_schema.get("properties", {})
         allowed_keys: set[str] = set(schema.required_fields)
         if isinstance(properties, dict):
-            allowed_keys.update(str(k) for k in properties if isinstance(k, (str, int)))
+            for k in properties:
+                if isinstance(k, (str, int)):
+                    allowed_keys.add(str(k))
 
-        data_keys = {str(k) for k in data.keys()}
+        data_keys: set[str] = set()
+        for k in data.keys():
+            if isinstance(k, (str, int)):
+                data_keys.add(str(k))
         if not data_keys.issubset(allowed_keys):
             return False
 
