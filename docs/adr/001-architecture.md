@@ -1,208 +1,227 @@
-# ADR 001: Grizzly Architecture — Deterministic Guardrails with <5ms Latency Guarantee
+# ADR 001: Grizzly Architecture — Functional Core + Imperative Shell for Deterministic LLM Guardrails
 
 ## Status
 Accepted
 
 ## Context
 
-Grizzly is a deterministic LLM safety guardrails engine. Production LLM agents are vulnerable to:
-- **Prompt injection attacks**: Malicious input hijacking system instructions
-- **Jailbreaks**: Instructions to ignore safety guidelines
-- **PII leakage**: Accidentally exposing sensitive data in responses
-- **Malformed output**: Non-deterministic JSON failures
+Grizzly is a deterministic firewall for LLM safety. Production LLM agents are vulnerable to:
 
-Traditional guardrails using another LLM add 800ms–2,000ms latency. Grizzly must:
+1. **Prompt injection attacks** — Malicious users hijack agent prompts
+2. **PII leakage** — Agent responses expose sensitive data (emails, SSNs, API keys)
+3. **Jailbreaks** — Attackers manipulate the model into unsafe behavior
+4. **Schema violations** — LLMs return malformed JSON, crashing downstream code
 
-1. Validate user prompts **pre-LLM** (ingress guard) in <3ms
-2. Repair and validate LLM output **post-LLM** (egress guard) in <2ms
-3. Mask PII in both directions without data loss
-4. Guarantee <5ms combined latency with **zero cloud dependencies**
+Traditional guardrails use another LLM to validate (800ms–2,000ms latency). Grizzly must:
+
+1. Block prompt injections in <5ms (deterministic)
+2. Mask PII before it leaves the system
+3. Repair/validate JSON schema without false rejections
+4. Run locally (zero cloud dependencies)
+5. Scale across multi-tenant deployments
 
 ## Decision
 
-Adopt **Deterministic Heuristic + Functional Core** architecture:
+Adopt a **Functional Core + Imperative Shell** architecture:
 
-- **Ingress Guard**: Heuristic injection detection (regex + entropy scoring + canary tokens)
-- **Egress Guard**: Deterministic JSON repair + schema validation + PII redaction
-- **Functional Core**: Pure heuristics, pattern matching, JSON repair algorithms (all immutable)
-- **Imperative Shell**: FastAPI proxy server, ONNX model loader (Phase 2+), policy enforcement
+- **Functional Core**: Pure guard rules (regex matching, semantic similarity, schema validation)
+  - No side effects; all types frozen (Pydantic `frozen=True`)
+  - Guards are first-class functions: `guard_ingress()`, `guard_egress()`, `check_jailbreak()`
+  - Composable pipeline: input → [checks] → decision → output
+  
+- **Imperative Shell**: I/O, HTTP relay, server coordination
+  - Proxy server (FastAPI) for OpenAI-compatible API
+  - In-process library for direct integration
+  - Config loading (YAML/JSON → dataclasses)
+  - Async HTTP relay to upstream LLM (httpx)
+  - Storage backends (in-memory, Redis, SQLite-Vec)
 
 ## Consequences
 
 ### Benefits
-✅ **<5ms guaranteed latency**: No LLM overhead; pure algorithmic processing  
-✅ **Deterministic**: 100% reproducible behavior (not probabilistic like LLM judges)  
-✅ **Zero cloud dependencies**: Runs locally, air-gapped deployment ready  
-✅ **Zero data exfiltration**: Sensitive data never leaves the machine  
-✅ **Production-grade safety**: Catches real attacks (DAN, prompt injection, jailbreaks)  
+✅ **Speed**: Pure functions = <5ms ingress guard, no external calls  
+✅ **Determinism**: Same prompt → same decision every time  
+✅ **Composability**: Add new guard checks by extending functions  
+✅ **Parallelization**: No shared state; safe for concurrent requests  
+✅ **Auditability**: Complete trace of all guard decisions + matches  
+✅ **No Cloud Dependency**: ONNX embeddings run locally (optional)  
 
 ### Trade-offs
-⚠️ Heuristic-based detection has tunable false positives/negatives  
-⚠️ Known-signature approach (pattern database) requires updates for new attacks (Phase 2)  
-⚠️ JSON repair is "best effort"; malformed output may still be invalid  
+⚠️ Regex-based detection has false positives/negatives vs. LLM judgement  
+⚠️ Imperative shell adds complexity for HTTP coordination  
+⚠️ Immutability enforced (no performance optimization via mutation)  
+⚠️ Requires careful tuning of thresholds per domain  
 
 ## Architecture Diagram
 
-### Request/Response Flow
+### Request Flow (Ingress → Egress)
+
 ```mermaid
 flowchart TD
-    A["User / LLM Client"] -->|Request| B["Grizzly Proxy"]
-    
-    B -->|INGRESS GUARD| C["Injection Detector"]
-    C -->|Heuristics + Entropy| D{High Risk?}
-    D -->|Yes| E["Block & Return Error"]
-    E -->|403 Forbidden| A
-    
-    D -->|No| F["PII Detector"]
-    F -->|Regex Patterns| G["Mask Sensitive Data"]
-    G -->|Sanitized Prompt| H["Forward to Upstream"]
-    H -->|LLM| I["LLM Response"]
-    
-    I -->|EGRESS GUARD| J["JSON Repair Engine"]
-    J -->|Fix Syntax| K["Valid JSON"]
-    K -->|Schema Validator| L{Conforms?}
-    L -->|No| M["Attempt Repair / Fallback"]
-    M -->|Valid| K
-    L -->|Yes| N["PII Redactor"]
-    N -->|Mask PII in Response| O["Safe Response"]
-    O -->|200 OK| A
+    A[\"User Prompt\"] -->|Normalize| B{Guard Ingress}
+    B -->|BLOCK| C[\"403: Blocked\"]
+    B -->|ALLOW| D[\"Relay to LLM\"]
+    D -->|LLM Response| E{Guard Egress}
+    E -->|Redact PII| F[\"Mask Sensitive Data\"]
+    F -->|Validate Schema| G{Schema Valid?}
+    G -->|No| H[\"Repair JSON\"]
+    H -->|Re-validate| G
+    G -->|Yes| I[\"200: Guarded Response\"]
+    C -->|Log Violation| J[\"Audit Log\"]
+    I -->|Log Metadata| J
 ```
 
 ### Component Interaction Sequence
+
 ```mermaid
 sequenceDiagram
-    participant Client as LLM Client
-    participant Proxy as Grizzly Proxy
-    participant Injection as Injection Guard
-    participant PII_Ingress as PII Detector
-    participant Upstream as Upstream LLM
-    participant Repair as JSON Repair
-    participant Validator as Schema Validator
-    participant PII_Egress as PII Redactor
+    participant Client as Client App
+    participant Grizzly as Grizzly Proxy
+    participant Rules as Guard Rules
+    participant LLM as Upstream LLM
+    participant Logger as Audit Log
 
-    Client->>Proxy: POST /v1/chat/completions
+    Client->>Grizzly: POST /v1/chat/completions
+    Grizzly->>Rules: guard_ingress(prompt)
+    Rules->>Rules: Check injection patterns
+    Rules->>Rules: Semantic jailbreak check
+    Rules-->>Grizzly: GuardDecision(allow|block)
     
-    Proxy->>Injection: Analyze prompt
-    Injection->>Injection: Regex + entropy scoring
-    Injection-->>Proxy: Risk score
-    
-    alt High injection risk
-        Proxy->>Client: 403 Forbidden (blocked)
-    else Low risk
-        Proxy->>PII_Ingress: Scan for PII
-        PII_Ingress-->>Proxy: Violations found
-        Proxy->>Proxy: Mask SSN/emails/API keys
-        
-        Proxy->>Upstream: Forward sanitized prompt
-        Upstream-->>Proxy: LLM response
-        
-        Proxy->>Repair: Validate JSON syntax
-        Repair->>Repair: Fix trailing commas, braces
-        Repair-->>Proxy: Repaired JSON
-        
-        Proxy->>Validator: Validate against schema
-        Validator-->>Proxy: Validation result
-        
-        Proxy->>PII_Egress: Redact PII in output
-        PII_Egress-->>Proxy: Cleaned response
-        
-        Proxy->>Client: 200 OK (safe response)
+    alt Block
+        Grizzly-->>Client: 403 Blocked
+        Grizzly->>Logger: Log violation
+    else Allow
+        Grizzly->>LLM: POST /v1/chat/completions
+        LLM-->>Grizzly: Response + tokens
+        Grizzly->>Rules: guard_egress(response)
+        Rules->>Rules: Scan PII patterns
+        Rules->>Rules: Validate JSON schema
+        Rules->>Rules: Repair malformed output
+        Rules-->>Grizzly: GuardedResponse(redacted)
+        Grizzly-->>Client: 200 OK
+        Grizzly->>Logger: Log metadata (redacted: true)
     end
 ```
 
 ## Implementation Details
 
-### Domain Types (Functional Core)
+### Guard Decision Types (Functional Core)
+
 ```python
 @dataclass(frozen=True)
-class GuardResult:
-    passed: bool
-    masked_payload: str
+class GuardDecision:
+    status: Literal["allow", "block", "warn"]
+    reason: str
+    score: float  # 0.0 (safe) to 1.0 (threat)
+    matched_patterns: List[str]
+
+@dataclass(frozen=True)
+class GuardedResponse:
+    original: str
+    redacted: str
     violations: List[str]
-    risk_score: float
-
-@dataclass(frozen=True)
-class ViolationType:
-    pattern: str  # e.g., "ignore previous instructions"
-    severity: Literal["low", "medium", "high"]
-    remediation: Literal["block", "mask"]
-
-@dataclass(frozen=True)
-class PII_Match:
-    type: Literal["ssn", "email", "api_key", "credit_card", "phone"]
-    value: str
-    position: Tuple[int, int]
+    repair_applied: bool
+    schema_valid: bool
 ```
 
-### Pure Heuristic Evaluators
+### Guard Functions (Pure)
+
 ```python
-def injection_risk_score(prompt: str) -> float:
-    # Purely functional, no side effects
-    risk = 0.0
+def guard_ingress(prompt: str, rules: GuardSpec) -> GuardDecision:
+    \"\"\"Detect prompt injection and jailbreak attempts.\"\"\"
+    # Phase 1: Fast regex patterns
+    for pattern in INJECTION_PATTERNS:
+        if re.search(pattern, prompt):
+            return GuardDecision(status="block", score=0.95, ...)
     
-    # Known patterns
-    for signature in INJECTION_SIGNATURES:
-        if signature.lower() in prompt.lower():
-            risk += 0.3
+    # Phase 2: Semantic similarity (optional, configurable)
+    if rules.use_semantic_check:
+        embedding = embedder.embed(prompt)
+        max_sim = max(
+            cosine_similarity(embedding, known_attack)
+            for known_attack in JAILBREAK_DB
+        )
+        if max_sim > rules.threshold:
+            return GuardDecision(status="warn" if max_sim < 0.9 else "block", ...)
     
-    # Entropy analysis
-    entropy = calculate_entropy(prompt)
-    if entropy > 5.5:  # Unusually high entropy = suspicious
-        risk += 0.2
-    
-    # Canary token detection
-    if any(token in prompt for token in CANARY_TOKENS):
-        risk += 0.5
-    
-    return min(risk, 1.0)
+    return GuardDecision(status="allow", score=0.0, ...)
 
-def mask_pii(text: str) -> str:
-    # Regex-based masking, no state mutations
-    text = re.sub(r'\b\d{3}-\d{2}-\d{4}\b', '[SSN]', text)
-    text = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '[EMAIL]', text)
-    text = re.sub(r'\b(?:sk-|api-)[A-Za-z0-9]{20,}\b', '[API_KEY]', text)
-    return text
-
-def repair_json(malformed: str) -> str:
-    # Algorithmic repair (no LLM), deterministic output
-    # Fix trailing commas
-    repaired = re.sub(r',(\s*[}\]])', r'\1', malformed)
-    # Add missing closing braces
-    open_braces = repaired.count('{') - repaired.count('}')
-    if open_braces > 0:
-        repaired += '}' * open_braces
-    return repaired
+def guard_egress(response: str, rules: GuardSpec) -> GuardedResponse:
+    \"\"\"Mask PII and validate/repair schema.\"\"\"
+    redacted = response
+    violations = []
+    
+    # Redact PII
+    for pii_type, pattern in rules.pii_patterns.items():
+        if re.search(pattern, redacted):
+            violations.append(f"Found {pii_type}")
+            redacted = re.sub(pattern, f"[REDACTED {pii_type}]", redacted)
+    
+    # Validate + repair JSON
+    repair_applied = False
+    schema_valid = False
+    try:
+        parsed = json.loads(redacted)
+        validate(parsed, rules.schema)
+        schema_valid = True
+    except (json.JSONDecodeError, ValidationError):
+        redacted = repair_json(redacted)
+        parsed = json.loads(redacted)
+        validate(parsed, rules.schema)
+        repair_applied = True
+        schema_valid = True
+    
+    return GuardedResponse(
+        original=response,
+        redacted=redacted,
+        violations=violations,
+        repair_applied=repair_applied,
+        schema_valid=schema_valid
+    )
 ```
 
-## Performance Benchmarks
+### Proxy Server (Imperative Shell)
 
-| Operation | P50 | P99 | Budget |
-|-----------|-----|-----|--------|
-| Injection classification | 1.2ms | 2.8ms | <3ms ✅ |
-| PII detection + masking | 0.8ms | 1.9ms | <2ms ✅ |
-| JSON repair | 0.5ms | 1.2ms | <2ms ✅ |
-| Schema validation | 0.3ms | 0.8ms | <1ms ✅ |
-| **Total ingress pipeline** | **2.5ms** | **4.2ms** | **<5ms ✅** |
-| **Total egress pipeline** | **1.8ms** | **3.5ms** | **<5ms ✅** |
-
-## Deployment Modes
-
-1. **In-Process Library**: Direct `from grizzly import guard_ingress, guard_egress`
-2. **Sidecar Proxy**: Standalone FastAPI server (localhost:8081)
-3. **Docker Container**: Ultra-lightweight (<200MB image)
-4. **Kubernetes DaemonSet**: Per-node safety enforcement
-
-## Rules & Signatures (Version-Controlled)
-
+```python
+@app.post("/v1/chat/completions")
+async def chat_completions(req: ChatCompletionRequest) -> ChatCompletionResponse:
+    # 1. Guard ingress
+    decision = guard_ingress(req.messages[-1].content, rules)
+    if decision.status == "block":
+        return error_response(403, decision.reason)
+    
+    # 2. Relay to upstream
+    resp = await upstream_client.post(..., json=req.model_dump())
+    
+    # 3. Guard egress
+    guarded = guard_egress(resp.content, rules)
+    
+    # 4. Log + return
+    if guarded.violations:
+        logger.warning(f"Violations: {guarded.violations}")
+    
+    return ChatCompletionResponse(
+        choices=[{"message": {"content": guarded.redacted}}],
+        usage=resp.usage,
+        metadata={"guarded": True, "violations": len(guarded.violations)}
+    )
 ```
-rules/
-├── injection_signatures.json    # Known attack patterns
-├── pii_patterns.json            # Regex for PII types
-└── jailbreak_phrases.json       # DAN mode, "act as if", etc.
-```
 
-Phase 2: Dynamic threat intelligence feed with auto-updates
+## CI Integration
+
+- **GitHub Actions**: Tests for all guard functions (regex, semantic, schema repair)
+- **Performance**: Latency benchmarks ensure <5ms ingress overhead
+- **Coverage**: 80%+ test coverage for all guard paths
+- **False Positive Rate**: Track & report on real workloads
 
 ## Related Decisions
-- ADR-002: ONNX-based semantic classifier (Phase 2+)
-- ADR-003: SIEM integration (Splunk, Datadog, OpenTelemetry)
+
+- ADR-002: Extensible guard check system (pluggable rules)
+- ADR-003: YAML/JSON configuration for rules + thresholds
+- ADR-004: Audit logging for compliance + debugging
+
+## References
+
+- [ARCHITECTURE.md](../docs/ARCHITECTURE.md)
+- [SECURITY.md](../SECURITY.md) — Limitations & best practices
+- [CONTRIBUTING.md](../CONTRIBUTING.md) — Adding new guards
