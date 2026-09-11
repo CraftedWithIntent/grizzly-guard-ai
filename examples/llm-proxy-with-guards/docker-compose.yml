@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  grizzly-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: grizzly-proxy-example
+    ports:
+      - "9000:9000"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 9000
+      LOG_LEVEL: info
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
