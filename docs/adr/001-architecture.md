@@ -1,18 +1,18 @@
-# ADR 001: Grizzly Architecture — Functional Core + Imperative Shell for Deterministic LLM Guardrails
+# ADR 001: Grizzly Guard AI Architecture — Functional Core + Imperative Shell for Deterministic LLM Guardrails
 
 ## Status
 Accepted
 
 ## Context
 
-Grizzly is a deterministic firewall for LLM safety. Production LLM agents are vulnerable to:
+Grizzly Guard AI is a deterministic firewall for LLM safety. Production LLM agents are vulnerable to:
 
 1. **Prompt injection attacks** — Malicious users hijack agent prompts
 2. **PII leakage** — Agent responses expose sensitive data (emails, SSNs, API keys)
 3. **Jailbreaks** — Attackers manipulate the model into unsafe behavior
 4. **Schema violations** — LLMs return malformed JSON, crashing downstream code
 
-Traditional guardrails use another LLM to validate (800ms–2,000ms latency). Grizzly must:
+Traditional guardrails use another LLM to validate (800ms–2,000ms latency). Grizzly Guard AI must:
 
 1. Block prompt injections in <5ms (deterministic)
 2. Mask PII before it leaves the system
@@ -76,30 +76,30 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     participant Client as Client App
-    participant Grizzly as Grizzly Proxy
+    participant Grizzly Guard AI as Grizzly Guard AI Proxy
     participant Rules as Guard Rules
     participant LLM as Upstream LLM
     participant Logger as Audit Log
 
-    Client->>Grizzly: POST /v1/chat/completions
-    Grizzly->>Rules: guard_ingress(prompt)
+    Client->>Grizzly Guard AI: POST /v1/chat/completions
+    Grizzly Guard AI->>Rules: guard_ingress(prompt)
     Rules->>Rules: Check injection patterns
     Rules->>Rules: Semantic jailbreak check
-    Rules-->>Grizzly: GuardDecision(allow|block)
+    Rules-->>Grizzly Guard AI: GuardDecision(allow|block)
     
     alt Block
-        Grizzly-->>Client: 403 Blocked
-        Grizzly->>Logger: Log violation
+        Grizzly Guard AI-->>Client: 403 Blocked
+        Grizzly Guard AI->>Logger: Log violation
     else Allow
-        Grizzly->>LLM: POST /v1/chat/completions
-        LLM-->>Grizzly: Response + tokens
-        Grizzly->>Rules: guard_egress(response)
+        Grizzly Guard AI->>LLM: POST /v1/chat/completions
+        LLM-->>Grizzly Guard AI: Response + tokens
+        Grizzly Guard AI->>Rules: guard_egress(response)
         Rules->>Rules: Scan PII patterns
         Rules->>Rules: Validate JSON schema
         Rules->>Rules: Repair malformed output
-        Rules-->>Grizzly: GuardedResponse(redacted)
-        Grizzly-->>Client: 200 OK
-        Grizzly->>Logger: Log metadata (redacted: true)
+        Rules-->>Grizzly Guard AI: GuardedResponse(redacted)
+        Grizzly Guard AI-->>Client: 200 OK
+        Grizzly Guard AI->>Logger: Log metadata (redacted: true)
     end
 ```
 

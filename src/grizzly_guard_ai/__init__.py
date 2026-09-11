@@ -16,7 +16,7 @@ Example usage:
     print(f"Safe output: {result.masked_payload}")
 """
 
-from grizzly.core import (
+from grizzly_guard_ai.core import (
     classify_injection_heuristic,
     guard_egress,
     guard_ingress,
@@ -24,7 +24,7 @@ from grizzly.core import (
     repair_json,
     validate_json_schema,
 )
-from grizzly.domain import (
+from grizzly_guard_ai.domain import (
     GuardResult,
     GuardStage,
     InjectionClassifierResult,

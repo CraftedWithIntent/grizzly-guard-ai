@@ -9,7 +9,7 @@ import re
 import time
 from typing import Any, cast
 
-from grizzly.domain import (
+from grizzly_guard_ai.domain import (
     GuardResult,
     GuardStage,
     InjectionClassifierResult,

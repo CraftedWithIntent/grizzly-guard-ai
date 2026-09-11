@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "grizzly-guard"
+name = "grizzly-guard-ai"
 version = "0.1.0-dev"
 description = "Sub-5ms deterministic guardrails engine for LLM safety, prompt injection defense, and JSON schema enforcement"
 readme = "README.md"
@@ -54,14 +54,14 @@ dev = [
 ]
 
 [project.scripts]
-grizzly = "grizzly.cli:app"
+grizzly-guard-ai = "grizzly_guard_ai.cli:app"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/grizzly"]
+packages = ["src/grizzly_guard_ai"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-v --cov=src/grizzly --cov-report=term-missing --cov-fail-under=80"
+addopts = "-v --cov=src/grizzly_guard_ai --cov-report=term-missing --cov-fail-under=80"
 testpaths = ["tests"]
 pythonpath = ["src"]
 

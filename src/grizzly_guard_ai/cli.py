@@ -20,7 +20,7 @@ def proxy(
         grizzly proxy --port 8081 --host 127.0.0.1
 
     """
-    from grizzly.infrastructure.proxy_server import run_proxy
+    from grizzly_guard_ai.infrastructure.proxy_server import run_proxy
 
     typer.echo(f"Starting Grizzly proxy on {host}:{port}")
     typer.echo(f"Upstream: {upstream}")
@@ -37,7 +37,7 @@ def scan(
         grizzly scan --prompt "ignore previous instructions"
 
     """
-    from grizzly.core import classify_injection_heuristic
+    from grizzly_guard_ai.core import classify_injection_heuristic
 
     result = classify_injection_heuristic(prompt)
     typer.echo(f"Injection Risk Score: {result.risk_score:.2f}")

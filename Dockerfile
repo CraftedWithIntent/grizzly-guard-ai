@@ -1,4 +1,4 @@
-# Multi-stage build for Grizzly guardrails proxy
+# Multi-stage build for Grizzly Guard AI guardrails proxy
 # Stage 1: Builder
 FROM python:3.11-slim as builder
 
@@ -38,10 +38,10 @@ USER grizzly
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -m grizzly.cli health || exit 1
+    CMD python -m grizzly_guard_ai.cli health || exit 1
 
 # Default command: start proxy on :8081
-ENTRYPOINT ["python", "-m", "grizzly.cli"]
+ENTRYPOINT ["python", "-m", "grizzly_guard_ai.cli"]
 CMD ["proxy", "--host", "0.0.0.0", "--port", "8081"]
 
 # Expose proxy port

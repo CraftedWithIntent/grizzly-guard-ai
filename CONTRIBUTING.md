@@ -338,7 +338,7 @@ Example template:
 import logging
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from grizzly import guard_ingress, guard_egress
+from grizzly_guard_ai import guard_ingress, guard_egress
 
 app = FastAPI(title="LLM Chat with Guardrails")
 logger = logging.getLogger(__name__)
@@ -397,7 +397,7 @@ Requirements:
 fastapi==0.104.1
 uvicorn==0.24.0
 pydantic==2.5.0
-grizzly-guard==0.1.0
+grizzly-guard-ai==0.1.0
 anthropic==0.7.1
 requests==2.31.0
 ```
@@ -580,7 +580,7 @@ Grizzly uses semantic versioning: **MAJOR.MINOR.PATCH**
    ```bash
    pip install build twine
    python -m build
-   twine upload dist/grizzly-guard-0.2.0-py3-none-any.whl
+   twine upload dist/grizzly-guard-ai-0.2.0-py3-none-any.whl
    ```
 
 ## Troubleshooting

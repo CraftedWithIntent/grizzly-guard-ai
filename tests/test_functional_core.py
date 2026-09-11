@@ -6,7 +6,7 @@ pipelines. All deterministic, no I/O dependencies.
 
 import json
 
-from grizzly import (
+from grizzly_guard_ai import (
     GuardStage,
     SchemaSpec,
     ViolationType,
@@ -25,7 +25,7 @@ from grizzly import (
 
 def test_calculate_entropy_empty() -> None:
     """Test entropy of empty string is 0.0."""
-    from grizzly.core import calculate_entropy
+    from grizzly_guard_ai.core import calculate_entropy
 
     assert calculate_entropy("") == 0.0
 

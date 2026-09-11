@@ -1,8 +1,8 @@
-# Grizzly Architecture
+# Grizzly Guard AI Architecture
 
 ## Overview
 
-Grizzly is built on **Functional Core + Imperative Shell** (ADR-001), separating pure business logic from side effects (I/O, HTTP, CLI).
+Grizzly Guard AI is built on **Functional Core + Imperative Shell** (ADR-001), separating pure business logic from side effects (I/O, HTTP, CLI).
 
 ### Principles
 
@@ -280,7 +280,7 @@ async def chat_completions(request: ChatCompletionRequest) -> ChatCompletionResp
 
 ## In-Process Library
 
-Users can also use Grizzly as a library without the proxy server:
+Users can also use Grizzly Guard AI as a library without the proxy server:
 
 ```python
 from grizzly import guard_ingress, guard_egress, GuardSpec
@@ -326,7 +326,7 @@ print(guarded.redacted)  # Masked email
 
 ## Error Handling
 
-Grizzly follows fail-safe principles:
+Grizzly Guard AI follows fail-safe principles:
 
 1. **Ingress guard fails → Block request** (default to safe)
 2. **Egress guard fails → Return original + log violation** (never hide errors)

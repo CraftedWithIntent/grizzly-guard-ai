@@ -1,6 +1,6 @@
 """Tests for Grizzly proxy server (M1.6)."""
 
-from grizzly.infrastructure.proxy_server import run_proxy
+from grizzly_guard_ai.infrastructure.proxy_server import run_proxy
 
 
 def test_run_proxy_callable() -> None:

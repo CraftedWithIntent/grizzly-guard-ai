@@ -1,6 +1,6 @@
-# Grizzly: Deterministic LLM Guardrails Engine
+# Grizzly Guard AI: Deterministic LLM Guardrails Engine
 
-![Grizzly](https://img.shields.io/badge/Grizzly-LLM%20Guardrails-brightgreen) ![License](https://img.shields.io/badge/License-MIT-blue) ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
+![Grizzly Guard AI](https://img.shields.io/badge/Grizzly%20Guard%20AI-LLM%20Guardrails-brightgreen) ![License](https://img.shields.io/badge/License-MIT-blue) ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 
 **Sub-5ms deterministic firewall for LLM safety. Catches prompt injections, detects jailbreaks, masks PII, and guarantees JSON schema conformity—without cloud dependencies or latency penalties.**
 
@@ -8,13 +8,13 @@
 
 LLM-connected agents are vulnerable to prompt injection attacks, jailbreaks, unintended PII leakage, and non-deterministic output failures. When an attacker hijacks a prompt or the model returns malformed JSON, production agents crash or leak sensitive data. Traditional guardrails add 800ms–2,000ms of latency (using another LLM to validate).
 
-## The Solution: Grizzly
+## The Solution: Grizzly Guard AI
 
-Grizzly is the "grizzly bar" in your LLM pipeline—a heavy-duty deterministic screening layer that catches destructive attacks before they reach your downstream code. Runs locally in <5ms with zero cloud dependencies.
+Grizzly Guard AI is the "grizzly bar" in your LLM pipeline—a heavy-duty deterministic screening layer that catches destructive attacks before they reach your downstream code. Runs locally in <5ms with zero cloud dependencies.
 
 ### Core Value Proposition
 
-| Metric | Without Grizzly | With Grizzly |
+| Metric | Without Grizzly Guard AI | With Grizzly Guard AI |
 |--------|-----------------|-------------|
 | Prompt Injection Defense | App vulnerable | Sub-5ms blocking |
 | PII Leakage Risk | High (undetected) | Redacted before egress |
@@ -30,10 +30,10 @@ Grizzly is the "grizzly bar" in your LLM pipeline—a heavy-duty deterministic s
 
 ```bash
 # Via pip
-pip install grizzly-guard
+pip install grizzly-guard-ai
 
 # Via Docker
-docker run -p 8081:8081 ghcr.io/craftedwithintent/grizzly:latest
+docker run -p 8081:8081 ghcr.io/craftedwithintent/grizzly-guard-ai:latest
 
 # From source
 git clone https://github.com/CraftedWithIntent/grizzly.git
@@ -46,7 +46,7 @@ uv pip install -e .
 #### 1. In-Process Library (Python)
 
 ```python
-from grizzly import guard_ingress, guard_egress, SchemaSpec
+from grizzly_guard_ai import guard_ingress, guard_egress, SchemaSpec
 
 # Pre-LLM validation (catch injection attacks)
 result = guard_ingress("User prompt here")
@@ -71,10 +71,10 @@ print(f"Safe output: {result.masked_payload}")
 #### 2. Proxy Server
 
 ```bash
-# Start Grizzly proxy
-grizzly proxy --port 8081
+# Start Grizzly Guard AI proxy
+grizzly-guard-ai proxy --port 8081
 
-# Configure your LLM client to route through Grizzly
+# Configure your LLM client to route through Grizzly Guard AI
 export GRIZZLY_PROXY=http://localhost:8081
 ```
 

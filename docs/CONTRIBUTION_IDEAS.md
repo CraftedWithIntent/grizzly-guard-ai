@@ -1,6 +1,6 @@
-# Contribution Ideas for Grizzly
+# Contribution Ideas for Grizzly Guard AI
 
-Welcome! This document outlines **20+ contribution opportunities** for Grizzly, organized by difficulty level with impact analysis and implementation guidance.
+Welcome! This document outlines **20+ contribution opportunities** for Grizzly Guard AI, organized by difficulty level with impact analysis and implementation guidance.
 
 ## How to Use This Guide
 
@@ -160,7 +160,7 @@ def repair_json(text: str, schema: Dict) -> str:
 
 ### 4. Add Request Rate Limiting to Proxy Server
 
-**Description:** Implement per-IP rate limiting for the Grizzly proxy (e.g., 100 req/min per IP).
+**Description:** Implement per-IP rate limiting for the Grizzly Guard AI proxy (e.g., 100 req/min per IP).
 
 **Impact/Effort Matrix:**
 - 🎯 **Impact:** Medium (prevents abuse, DDoS resistance)
@@ -216,7 +216,7 @@ async def rate_limit_middleware(request: Request, call_next):
 
 ## 🟡 Medium Issues (Intermediate, 2–4 hours)
 
-Requires understanding Grizzly internals (proxy, guards, storage).
+Requires understanding Grizzly Guard AI internals (proxy, guards, storage).
 
 ### 5. Add Semantic Similarity Guard for Prompt Injection
 
@@ -430,4 +430,4 @@ Requires deep knowledge of embeddings, vector DBs, or distributed systems.
 - **Email:** hello@craftedwithintent.ai
 - **Security Concerns:** See [SECURITY.md](../SECURITY.md)
 
-Thank you for helping make Grizzly better! 🐻
+Thank you for helping make Grizzly Guard AI better! 🐻

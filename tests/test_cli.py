@@ -2,7 +2,7 @@
 
 from typer.testing import CliRunner
 
-from grizzly.cli import app
+from grizzly_guard_ai.cli import app
 
 runner = CliRunner()
 

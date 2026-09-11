@@ -341,8 +341,8 @@ pytest tests/ -vv
 ### Docker image build fails
 
 ```bash
-# Make sure grizzly-guard is published to PyPI
-# Check: pip search grizzly-guard
+# Make sure grizzly-guard-ai is published to PyPI
+# Check: pip search grizzly-guard-ai
 
 # Or build locally with local grizzly package
 docker build --build-arg GRIZZLY_PATH=../../ -t grizzly-proxy-example .

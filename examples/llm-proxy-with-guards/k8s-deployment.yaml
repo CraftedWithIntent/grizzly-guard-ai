@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
       - name: grizzly-proxy
-        image: ghcr.io/craftedwithintent/grizzly:latest
+        image: ghcr.io/craftedwithintent/grizzly-guard-ai:latest
         imagePullPolicy: Always
 
         ports:
