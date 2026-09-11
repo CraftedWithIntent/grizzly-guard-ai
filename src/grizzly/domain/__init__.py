@@ -5,7 +5,7 @@ violations, and masked payloads. Pure data, no I/O side effects.
 """
 
 from dataclasses import dataclass
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any
 
 

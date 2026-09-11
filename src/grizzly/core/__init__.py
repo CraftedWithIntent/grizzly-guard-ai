@@ -18,8 +18,6 @@ from grizzly.domain import (
     SchemaSpec,
     ViolationType,
 )
-
-
 # ============================================================================
 # INJECTION DETECTION (Heuristic + Entropy)
 # ============================================================================
@@ -83,6 +81,7 @@ def classify_injection_heuristic(
 
     Returns:
         Classification result with risk score (0.0–1.0).
+
     """
     start_time = time.perf_counter()
 
@@ -230,7 +229,6 @@ def repair_json(text: str) -> JsonRepairResult:
     # Try parsing first
     try:
         json.loads(repaired)
-        latency_ms = (time.perf_counter() - start_time) * 1000
         return JsonRepairResult(
             original=text,
             repaired=repaired,
@@ -327,6 +325,7 @@ def guard_ingress(
 
     Returns:
         GuardResult with violations list.
+
     """
     start_time = time.perf_counter()
     violations = []
