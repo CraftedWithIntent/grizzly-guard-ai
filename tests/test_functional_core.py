@@ -5,24 +5,29 @@ pipelines. All deterministic, no I/O dependencies.
 """
 
 import json
-import pytest
 
 from grizzly import (
+    GuardStage,
+    SchemaSpec,
+    ViolationType,
     classify_injection_heuristic,
     guard_egress,
     guard_ingress,
     mask_pii,
     repair_json,
     validate_json_schema,
-    GuardStage,
-    SchemaSpec,
-    ViolationType,
 )
-
 
 # ============================================================================
 # INJECTION CLASSIFICATION TESTS
 # ============================================================================
+
+
+def test_calculate_entropy_empty() -> None:
+    """Test entropy of empty string is 0.0."""
+    from grizzly.core import calculate_entropy
+
+    assert calculate_entropy("") == 0.0
 
 
 def test_classify_injection_heuristic_benign() -> None:
@@ -41,7 +46,7 @@ def test_classify_injection_heuristic_jailbreak() -> None:
     result = classify_injection_heuristic(prompt)
 
     assert result.is_injection
-    assert result.risk_score > 0.3
+    assert result.risk_score > 0.25
     assert len(result.detected_patterns) > 0
 
 
@@ -68,6 +73,16 @@ def test_classify_injection_latency() -> None:
     result = classify_injection_heuristic(prompt)
 
     assert result.latency_ms < 5.0
+
+
+def test_classify_injection_token_count_high() -> None:
+    """Test that very long prompts trigger token_count_high flag."""
+    # Create a prompt with 2501+ tokens
+    long_prompt = " ".join(["word"] * 2501)
+    result = classify_injection_heuristic(long_prompt)
+
+    assert result.heuristic_flags.get("token_count_high") is True
+    assert result.risk_score > 0.15
 
 
 # ============================================================================
@@ -218,6 +233,19 @@ def test_validate_json_schema_strict_mode() -> None:
     data = {"name": "John", "unknown_field": "value"}
 
     assert not validate_json_schema(data, schema)
+
+
+def test_validate_json_schema_non_strict() -> None:
+    """Test non-strict mode allows unknown fields."""
+    schema = SchemaSpec(
+        name="test_schema",
+        json_schema={"type": "object", "properties": {"name": {"type": "string"}}},
+        required_fields=["name"],
+        strict=False,
+    )
+    data = {"name": "John", "unknown_field": "value"}
+
+    assert validate_json_schema(data, schema)
 
 
 # ============================================================================

@@ -6,21 +6,18 @@ All functions are deterministic and composable.
 
 import json
 import re
-import string
 import time
-from typing import Any
+from typing import Any, cast
 
 from grizzly.domain import (
     GuardResult,
     GuardStage,
     InjectionClassifierResult,
     JsonRepairResult,
-    MaskedPayload,
     PiiClassifierResult,
     SchemaSpec,
     ViolationType,
 )
-
 
 # ============================================================================
 # INJECTION DETECTION (Heuristic + Entropy)
@@ -35,11 +32,11 @@ def calculate_entropy(text: str) -> float:
     if not text:
         return 0.0
 
-    freq = {}
+    freq: dict[str, int] = {}
     for char in text:
         freq[char] = freq.get(char, 0) + 1
 
-    entropy = 0.0
+    entropy: float = 0.0
     text_len = len(text)
     for count in freq.values():
         prob = count / text_len
@@ -54,20 +51,22 @@ def detect_canary_tokens(text: str) -> list[str]:
 
     Returns list of matched canary patterns.
     """
-    canaries = [
+    canaries: list[str] = [
         r"CANARY_TOKEN",
         r"INJECTION_TEST",
         r"<INJECTION>",
         r"\[JAILBREAK\]",
     ]
-    matched = []
+    matched: list[str] = []
     for pattern in canaries:
         if re.search(pattern, text, re.IGNORECASE):
             matched.append(pattern)
     return matched
 
 
-def classify_injection_heuristic(prompt: str) -> InjectionClassifierResult:
+def classify_injection_heuristic(
+    prompt: str, threshold: float = 0.25
+) -> InjectionClassifierResult:
     """Classify prompt for injection risk using heuristics.
 
     Checks:
@@ -75,19 +74,26 @@ def classify_injection_heuristic(prompt: str) -> InjectionClassifierResult:
     - Known attack signatures (DAN, GPT-4 jailbreaks, etc.)
     - Canary tokens
     - Token length anomalies
+    - Repetition patterns (common in injection attacks)
 
-    Returns classification result with risk score (0.0–1.0).
+    Args:
+        prompt: The user prompt to classify
+        threshold: Risk score threshold for classification (default 0.25)
+
+    Returns:
+        Classification result with risk score (0.0–1.0).
+
     """
     start_time = time.perf_counter()
 
-    detected_patterns = []
-    heuristic_flags = {}
-    risk_score = 0.0
+    detected_patterns: list[str] = []
+    heuristic_flags: dict[str, Any] = {}
+    risk_score: float = 0.0
 
     # Check entropy
     entropy = calculate_entropy(prompt)
     heuristic_flags["entropy"] = entropy
-    if entropy > 0.8:
+    if entropy > 0.75:
         risk_score += 0.15
         heuristic_flags["entropy_anomaly"] = True
 
@@ -99,32 +105,47 @@ def classify_injection_heuristic(prompt: str) -> InjectionClassifierResult:
         r"do not follow",
         r"override.*system",
         r"DAN[\s-]*mode",
-        r"GPT-?4",
+        r"system prompt",
+        r"assistant:\s*ignore",
+        r"you are now",
     ]
     for pattern in jailbreak_patterns:
         if re.search(pattern, prompt, re.IGNORECASE):
             detected_patterns.append(pattern)
-            risk_score += 0.1
+            risk_score += 0.12
 
     # Check for canary tokens
     canaries = detect_canary_tokens(prompt)
     if canaries:
         detected_patterns.extend(canaries)
-        risk_score += 0.2
+        risk_score += 0.25
         heuristic_flags["canary_tokens"] = True
 
     # Check token count anomaly (very short or very long)
     tokens = prompt.split()
-    if len(tokens) < 5:
+    if len(tokens) < 3:
         heuristic_flags["token_count_low"] = True
-        risk_score += 0.05
-    elif len(tokens) > 2000:
+        risk_score += 0.08
+    elif len(tokens) > 2500:
         heuristic_flags["token_count_high"] = True
-        risk_score += 0.1
+        risk_score += 0.15
+
+    # Check for suspicious repetition patterns (common in injection attacks)
+    # e.g., "ignore ignore ignore" or "do do do"
+    words: list[str] = prompt.lower().split()
+    word_counts: dict[str, int] = {}
+    for word in words:
+        word_counts[word] = word_counts.get(word, 0) + 1
+
+    for word, count in word_counts.items():
+        if len(word) > 3 and count > 2:  # Repeated word > 2 times
+            risk_score += min(0.05 * count, 0.2)
+            heuristic_flags["repetition_detected"] = True
+            break
 
     # Normalize risk score to 0.0–1.0
     risk_score = min(risk_score, 1.0)
-    is_injection = risk_score > 0.3  # Threshold
+    is_injection = risk_score > threshold
 
     latency_ms = (time.perf_counter() - start_time) * 1000
 
@@ -151,7 +172,7 @@ def mask_pii(text: str) -> PiiClassifierResult:
     """
     start_time = time.perf_counter()
 
-    pii_patterns = {
+    pii_patterns: dict[str, str] = {
         "ssn": r"\b\d{3}-\d{2}-\d{4}\b",
         "email": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
         "api_key": r"(sk_|api_|key_)[A-Za-z0-9_]{20,}",
@@ -160,8 +181,8 @@ def mask_pii(text: str) -> PiiClassifierResult:
     }
 
     masked_text = text
-    detected_types = []
-    redaction_count = 0
+    detected_types: list[str] = []
+    redaction_count: int = 0
 
     for pii_type, pattern in pii_patterns.items():
         matches = re.finditer(pattern, masked_text)
@@ -202,14 +223,12 @@ def repair_json(text: str) -> JsonRepairResult:
 
     Returns repaired JSON string (valid JSON if successful).
     """
-    start_time = time.perf_counter()
-    mutations = []
+    mutations: list[str] = []
     repaired = text
 
     # Try parsing first
     try:
         json.loads(repaired)
-        latency_ms = (time.perf_counter() - start_time) * 1000
         return JsonRepairResult(
             original=text,
             repaired=repaired,
@@ -249,8 +268,6 @@ def repair_json(text: str) -> JsonRepairResult:
     except json.JSONDecodeError:
         pass
 
-    latency_ms = (time.perf_counter() - start_time) * 1000
-
     return JsonRepairResult(
         original=text,
         repaired=repaired,
@@ -275,10 +292,19 @@ def validate_json_schema(data: Any, schema: SchemaSpec) -> bool:
             return False
 
     # Check strict mode (no unknown fields)
-    if schema.strict:
-        allowed_keys = set(schema.json_schema.get("properties", {}).keys())
-        allowed_keys.update(schema.required_fields)
-        if not set(data.keys()).issubset(allowed_keys):
+    if not schema.strict:
+        return True
+
+    # Get allowed field names from schema
+    allowed_fields = set(schema.required_fields)
+    schema_props = schema.json_schema.get("properties", {})
+    if isinstance(schema_props, dict):
+        for prop_name in cast(dict[str, Any], schema_props):
+            allowed_fields.add(str(prop_name))
+
+    # Check all data keys are allowed
+    for data_key in cast(dict[str, Any], data):
+        if str(data_key) not in allowed_fields:
             return False
 
     return True
@@ -291,7 +317,7 @@ def validate_json_schema(data: Any, schema: SchemaSpec) -> bool:
 
 def guard_ingress(
     prompt: str,
-    injection_threshold: float = 0.3,
+    injection_threshold: float = 0.25,
     mask_pii_flag: bool = True,
 ) -> GuardResult:
     """Pre-LLM ingress validation pipeline.
@@ -300,13 +326,22 @@ def guard_ingress(
     1. Classify for injection risk
     2. Optionally mask PII
     3. Return decision (passed/blocked)
+
+    Args:
+        prompt: User input prompt
+        injection_threshold: Risk score threshold (default 0.25)
+        mask_pii_flag: Whether to mask PII (default True)
+
+    Returns:
+        GuardResult with violations list.
+
     """
     start_time = time.perf_counter()
-    violations = []
+    violations: list[ViolationType] = []
     masked_payload = prompt
 
     # Step 1: Injection classification
-    injection_result = classify_injection_heuristic(prompt)
+    injection_result = classify_injection_heuristic(prompt, threshold=injection_threshold)
     if injection_result.is_injection:
         violations.append(ViolationType.PROMPT_INJECTION)
 
@@ -350,7 +385,7 @@ def guard_egress(
     5. Return result
     """
     start_time = time.perf_counter()
-    violations = []
+    violations: list[ViolationType] = []
     masked_payload = llm_output
 
     # Step 1–2: JSON repair
