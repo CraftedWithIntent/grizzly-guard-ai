@@ -51,13 +51,13 @@ def detect_canary_tokens(text: str) -> list[str]:
 
     Returns list of matched canary patterns.
     """
-    canaries = [
+    canaries: list[str] = [
         r"CANARY_TOKEN",
         r"INJECTION_TEST",
         r"<INJECTION>",
         r"\[JAILBREAK\]",
     ]
-    matched = []
+    matched: list[str] = []
     for pattern in canaries:
         if re.search(pattern, text, re.IGNORECASE):
             matched.append(pattern)
@@ -132,8 +132,8 @@ def classify_injection_heuristic(
 
     # Check for suspicious repetition patterns (common in injection attacks)
     # e.g., "ignore ignore ignore" or "do do do"
-    words = prompt.lower().split()
-    word_counts = {}
+    words: list[str] = prompt.lower().split()
+    word_counts: dict[str, int] = {}
     for word in words:
         word_counts[word] = word_counts.get(word, 0) + 1
 
@@ -293,7 +293,7 @@ def validate_json_schema(data: Any, schema: SchemaSpec) -> bool:
 
     # Check strict mode (no unknown fields)
     if schema.strict:
-        allowed_keys = set(schema.json_schema.get("properties", {}).keys())
+        allowed_keys: set[str] = set(schema.json_schema.get("properties", {}).keys())
         allowed_keys.update(schema.required_fields)
         if not set(data.keys()).issubset(allowed_keys):
             return False
