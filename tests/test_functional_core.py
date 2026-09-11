@@ -23,6 +23,13 @@ from grizzly import (
 # ============================================================================
 
 
+def test_calculate_entropy_empty() -> None:
+    """Test entropy of empty string is 0.0."""
+    from grizzly.core import calculate_entropy
+
+    assert calculate_entropy("") == 0.0
+
+
 def test_classify_injection_heuristic_benign() -> None:
     """Test that benign prompts pass injection check."""
     prompt = "What is the capital of France?"
@@ -66,6 +73,16 @@ def test_classify_injection_latency() -> None:
     result = classify_injection_heuristic(prompt)
 
     assert result.latency_ms < 5.0
+
+
+def test_classify_injection_token_count_high() -> None:
+    """Test that very long prompts trigger token_count_high flag."""
+    # Create a prompt with 2501+ tokens
+    long_prompt = " ".join(["word"] * 2501)
+    result = classify_injection_heuristic(long_prompt)
+
+    assert result.heuristic_flags.get("token_count_high") is True
+    assert result.risk_score > 0.15
 
 
 # ============================================================================
@@ -216,6 +233,19 @@ def test_validate_json_schema_strict_mode() -> None:
     data = {"name": "John", "unknown_field": "value"}
 
     assert not validate_json_schema(data, schema)
+
+
+def test_validate_json_schema_non_strict() -> None:
+    """Test non-strict mode allows unknown fields."""
+    schema = SchemaSpec(
+        name="test_schema",
+        json_schema={"type": "object", "properties": {"name": {"type": "string"}}},
+        required_fields=["name"],
+        strict=False,
+    )
+    data = {"name": "John", "unknown_field": "value"}
+
+    assert validate_json_schema(data, schema)
 
 
 # ============================================================================

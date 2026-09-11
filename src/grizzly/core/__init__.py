@@ -7,7 +7,7 @@ All functions are deterministic and composable.
 import json
 import re
 import time
-from typing import Any
+from typing import Any, cast
 
 from grizzly.domain import (
     GuardResult,
@@ -291,8 +291,22 @@ def validate_json_schema(data: Any, schema: SchemaSpec) -> bool:
         if field not in data:
             return False
 
-    # TODO: Phase 2 - strict mode validation with jsonschema library
-    # For now, skip strict mode to avoid type complexity with Any
+    # Check strict mode (no unknown fields)
+    if not schema.strict:
+        return True
+
+    # Get allowed field names from schema
+    allowed_fields = set(schema.required_fields)
+    schema_props = schema.json_schema.get("properties", {})
+    if isinstance(schema_props, dict):
+        for prop_name in cast(dict[str, Any], schema_props):
+            allowed_fields.add(str(prop_name))
+
+    # Check all data keys are allowed
+    for data_key in cast(dict[str, Any], data):
+        if str(data_key) not in allowed_fields:
+            return False
+
     return True
 
 
