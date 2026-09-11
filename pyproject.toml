@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "grizzly-guard-ai"
-version = "0.1.0"
+version = "0.1.1"
 description = "Sub-5ms deterministic guardrails engine for LLM safety, prompt injection defense, and JSON schema enforcement"
 readme = "README.md"
 requires-python = ">=3.11"
