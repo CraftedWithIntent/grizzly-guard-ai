@@ -18,6 +18,7 @@ def proxy(
 
     Example:
         grizzly proxy --port 8081 --host 127.0.0.1
+
     """
     from grizzly.infrastructure.proxy_server import run_proxy
 
@@ -34,6 +35,7 @@ def scan(
 
     Example:
         grizzly scan --prompt "ignore previous instructions"
+
     """
     from grizzly.core import classify_injection_heuristic
 

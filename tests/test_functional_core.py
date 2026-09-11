@@ -5,18 +5,17 @@ pipelines. All deterministic, no I/O dependencies.
 """
 
 import json
-import pytest
 
 from grizzly import (
+    GuardStage,
+    SchemaSpec,
+    ViolationType,
     classify_injection_heuristic,
     guard_egress,
     guard_ingress,
     mask_pii,
     repair_json,
     validate_json_schema,
-    GuardStage,
-    SchemaSpec,
-    ViolationType,
 )
 
 

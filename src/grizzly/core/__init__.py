@@ -6,7 +6,6 @@ All functions are deterministic and composable.
 
 import json
 import re
-import string
 import time
 from typing import Any
 
@@ -15,7 +14,6 @@ from grizzly.domain import (
     GuardStage,
     InjectionClassifierResult,
     JsonRepairResult,
-    MaskedPayload,
     PiiClassifierResult,
     SchemaSpec,
     ViolationType,
@@ -83,7 +81,8 @@ def classify_injection_heuristic(
         prompt: The user prompt to classify
         threshold: Risk score threshold for classification (default 0.25)
 
-    Returns classification result with risk score (0.0–1.0).
+    Returns:
+        Classification result with risk score (0.0–1.0).
     """
     start_time = time.perf_counter()
 
@@ -271,8 +270,6 @@ def repair_json(text: str) -> JsonRepairResult:
     except json.JSONDecodeError:
         pass
 
-    latency_ms = (time.perf_counter() - start_time) * 1000
-
     return JsonRepairResult(
         original=text,
         repaired=repaired,
@@ -328,7 +325,8 @@ def guard_ingress(
         injection_threshold: Risk score threshold (default 0.25)
         mask_pii_flag: Whether to mask PII (default True)
 
-    Returns GuardResult with violations list.
+    Returns:
+        GuardResult with violations list.
     """
     start_time = time.perf_counter()
     violations = []

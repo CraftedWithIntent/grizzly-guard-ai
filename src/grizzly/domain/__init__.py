@@ -5,11 +5,11 @@ violations, and masked payloads. Pure data, no I/O side effects.
 """
 
 from dataclasses import dataclass
-from enum import Enum
-from typing import Any, Optional
+from enum import Enum, StrEnum
+from typing import Any
 
 
-class ViolationType(str, Enum):
+class ViolationType(StrEnum):
     """Classification of guardrail violations."""
 
     PROMPT_INJECTION = "prompt_injection"
@@ -22,7 +22,7 @@ class ViolationType(str, Enum):
     ENTROPY_ANOMALY = "entropy_anomaly"
 
 
-class GuardStage(str, Enum):
+class GuardStage(StrEnum):
     """Execution stage: ingress (pre-LLM) or egress (post-LLM)."""
 
     INGRESS = "ingress"
@@ -42,6 +42,7 @@ class GuardResult:
         original_payload: Original input payload
         latency_ms: Execution time in milliseconds
         metadata: Additional context (reason, matched_pattern, etc.)
+
     """
 
     passed: bool
@@ -71,6 +72,7 @@ class MaskedPayload:
         original: Unmasked input
         masked: Masked output
         redactions: List of redaction metadata (type, count, example)
+
     """
 
     original: str
@@ -87,6 +89,7 @@ class JsonRepairResult:
         repaired: Repaired JSON string (valid JSON)
         valid: True if original was already valid JSON
         mutations: List of applied repairs (corrected quotes, trailing commas, etc.)
+
     """
 
     original: str
@@ -104,6 +107,7 @@ class SchemaSpec:
         json_schema: Full JSON schema dict (JSON Schema draft 7+)
         required_fields: List of required field names
         strict: Enforce strict validation (fail on unknown fields)
+
     """
 
     name: str
@@ -122,6 +126,7 @@ class InjectionClassifierResult:
         detected_patterns: List of matched attack signatures
         heuristic_flags: Dict of heuristic checks (entropy, canaries, etc.)
         latency_ms: Execution time
+
     """
 
     is_injection: bool
@@ -141,6 +146,7 @@ class PiiClassifierResult:
         masked_text: Text with PII redacted
         redaction_count: Number of redactions applied
         latency_ms: Execution time
+
     """
 
     pii_found: bool
