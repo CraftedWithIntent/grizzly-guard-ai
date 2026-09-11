@@ -36,7 +36,7 @@ pip install grizzly-guard-ai
 docker run -p 8081:8081 ghcr.io/craftedwithintent/grizzly-guard-ai:latest
 
 # From source
-git clone https://github.com/CraftedWithIntent/grizzly.git
+git clone https://github.com/CraftedWithIntent/grizzly-guard-ai.git
 cd grizzly
 uv pip install -e .
 ```
@@ -375,7 +375,7 @@ grizzly/
 ### Local Development
 
 ```bash
-git clone https://github.com/CraftedWithIntent/grizzly.git
+git clone https://github.com/CraftedWithIntent/grizzly-guard-ai.git
 cd grizzly
 uv pip install -e .
 grizzly proxy --port 8081
@@ -422,6 +422,6 @@ MIT License. See [LICENSE](LICENSE) for details.
 ## Questions? Support?
 
 - 📖 [Documentation](https://docs.grizzly.ai)
-- 🐛 [GitHub Issues](https://github.com/CraftedWithIntent/grizzly/issues)
+- 🐛 [GitHub Issues](https://github.com/CraftedWithIntent/grizzly-guard-ai/issues)
 - 💬 [Discord Community](https://discord.gg/grizzly)
 - 📧 [hello@craftedwithintent.ai](mailto:hello@craftedwithintent.ai)

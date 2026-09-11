@@ -426,7 +426,7 @@ Requires deep knowledge of embeddings, vector DBs, or distributed systems.
 
 ## Questions?
 
-- **GitHub Discussions:** https://github.com/CraftedWithIntent/grizzly/discussions
+- **GitHub Discussions:** https://github.com/CraftedWithIntent/grizzly-guard-ai/discussions
 - **Email:** hello@craftedwithintent.ai
 - **Security Concerns:** See [SECURITY.md](../SECURITY.md)
 

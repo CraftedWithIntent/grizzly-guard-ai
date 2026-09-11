@@ -161,7 +161,7 @@ kubectl port-forward svc/grizzly-proxy 9000:9000 -n grizzly-example
 
 ## Contributing
 
-Have a great example? Open a PR at https://github.com/CraftedWithIntent/grizzly/pulls
+Have a great example? Open a PR at https://github.com/CraftedWithIntent/grizzly-guard-ai/pulls
 
 Include:
 - ✅ Complete app code

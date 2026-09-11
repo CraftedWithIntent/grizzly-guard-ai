@@ -359,7 +359,7 @@ docker build --build-arg GRIZZLY_PATH=../../ -t grizzly-proxy-example .
 ## Resources
 
 - **Grizzly GitHub:** https://github.com/CraftedWithIntent/grizzly
-- **Grizzly Docs:** https://github.com/CraftedWithIntent/grizzly/tree/main/docs
+- **Grizzly Docs:** https://github.com/CraftedWithIntent/grizzly-guard-ai/tree/main/docs
 - **OpenAI API Docs:** https://platform.openai.com/docs/api-reference/chat/create
 - **FastAPI Docs:** https://fastapi.tiangolo.com/
 

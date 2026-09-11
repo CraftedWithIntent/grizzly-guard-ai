@@ -6,7 +6,7 @@
 
 ### New to Grizzly?
 
-1. **Pick an issue:** Browse [#good-first-issue](https://github.com/CraftedWithIntent/grizzly/labels/good%20first%20issue) or [#help-wanted](https://github.com/CraftedWithIntent/grizzly/labels/help%20wanted) labels
+1. **Pick an issue:** Browse [#good-first-issue](https://github.com/CraftedWithIntent/grizzly-guard-ai/labels/good%20first%20issue) or [#help-wanted](https://github.com/CraftedWithIntent/grizzly-guard-ai/labels/help%20wanted) labels
 2. **Review ideas:** See [docs/CONTRIBUTION_IDEAS.md](docs/CONTRIBUTION_IDEAS.md) for 20+ contribution ideas (🟢 Easy → 🔴 Hard)
 3. **Comment on issue:** Let us know you're interested
 4. **Follow the guide:** Setup, code, test, submit PR
@@ -87,7 +87,7 @@ Thank you for contributing! This guide explains how to develop, test, and submit
 ### Clone and install in dev mode
 
 ```bash
-git clone https://github.com/CraftedWithIntent/grizzly.git
+git clone https://github.com/CraftedWithIntent/grizzly-guard-ai.git
 cd grizzly
 python -m venv venv
 source venv/bin/activate  # on Windows: venv\Scripts\activate

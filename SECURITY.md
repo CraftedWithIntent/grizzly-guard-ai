@@ -78,7 +78,7 @@ We follow [semantic versioning](https://semver.org/) for releases:
 - **PATCH:** Bug fixes and security patches
 
 Subscribe to GitHub releases to stay informed of security updates:
-https://github.com/CraftedWithIntent/grizzly/releases
+https://github.com/CraftedWithIntent/grizzly-guard-ai/releases
 
 ## Dependencies
 
